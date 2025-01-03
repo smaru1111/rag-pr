@@ -22,6 +22,8 @@ jobs:
           node-version: '20.x'
 
       - name: npm install, build, and test
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: |
           cd fe
           npm install
