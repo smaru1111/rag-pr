@@ -1,9 +1,9 @@
 import { auth } from "@/auth";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import { LoginButton } from "@/app/components/LoginButton";
-import { RepositoryList } from "@/app/components/RepositoryList";
 import { getRepositories } from "@/services/repository";
-
+import { getRepoSettingsByOwner } from "@/lib/cosmosdb";
+import { RepositoryListContainer } from "@/app/components/RepositoryListContainer";
 export default async function Home() {
   const session = await auth();
   
@@ -17,6 +17,11 @@ export default async function Home() {
 
   try {
     const repos = await getRepositories(session.accessToken!);
+    const settings = await getRepoSettingsByOwner(session.user?.id as string);
+    const settingsMap = settings.reduce((acc, setting) => {
+      acc[setting.repo_id] = setting;
+      return acc;
+    }, {} as Record<number, typeof settings[0]>);
 
     return (
       <div className="min-h-screen p-8">
@@ -24,7 +29,10 @@ export default async function Home() {
           <h1 className="text-2xl font-bold">Repository Management</h1>
           <SignOutButton />
         </div>
-        <RepositoryList repos={repos} />
+        <RepositoryListContainer 
+          repos={repos} 
+          initialSettings={settingsMap}
+        />
       </div>
     );
   } catch (error) {
