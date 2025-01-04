@@ -12,7 +12,9 @@
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.1.3"
+    "next": "15.1.3",
+    "next-auth": "^5.0.0-beta.13",
+    "@auth/core": "^0.28.0"
   },
   "devDependencies": {
     "typescript": "^5",
