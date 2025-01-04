@@ -1,30 +1,31 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
+import { getGitHubUser, getGitHubRepository } from "@/lib/repository";
+import { getRepositories, updateRepository } from "@/lib/cosmosdb";
+
 
 export async function GET() {
   try {
     const headersList = await headers();
     const authHeader = headersList.get("Authorization");
     const token = authHeader?.split(" ")[1];
-
-    const response = await fetch("https://api.github.com/user/repos", {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("GitHub API Error:", errorData);
-      return NextResponse.json(
-        { error: "Failed to fetch repositories", details: errorData },
-        { status: response.status }
-      );
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const repos = await response.json();
-    return NextResponse.json(repos);
+    
+    await getGitHubUser(token);
+    const repos = await getGitHubRepository(token);
+    const dbRepos = await getRepositories(repos.map(repo => repo.repo_id));
+    
+    const mergedRepos = repos.map(repo => {
+      const dbRepo = dbRepos.find(dbRepo => dbRepo.repo_id === repo.repo_id);
+      return {
+        ...repo,
+        ...dbRepo,
+      };
+    });
+    
+    return NextResponse.json(mergedRepos);
   } catch (error) {
     console.error("Error fetching repositories:", error);
     return NextResponse.json(
@@ -33,3 +34,16 @@ export async function GET() {
     );
   }
 } 
+
+export async function POST(request: NextRequest) {
+  const headersList = await headers();
+  const authHeader = headersList.get("Authorization");
+  const token = authHeader?.split(" ")[1];
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  
+  const repos = await request.json();
+  const savedRepos = await updateRepository(repos);
+  return NextResponse.json(savedRepos);
+}

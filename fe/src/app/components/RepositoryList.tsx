@@ -3,20 +3,26 @@
 import { useState } from 'react';
 import { RepositorySettings } from './RepositorySettings';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { RepoSettings } from '@/lib/cosmosdb';
-import type { Repository } from '@/services/repository';
+import { fetchRepositories, saveRepository } from '@/services/repository';
+import { Repository } from '@/types/repository';
 
 interface RepositoryListProps {
-  repos: Repository[];
-  settings?: Record<number, RepoSettings>;
-  onSaveSettings: (settings: RepoSettings) => Promise<void>;
+  initialRepos: Repository[];
+  accessToken: string;
 }
 
-export function RepositoryList({ repos, settings, onSaveSettings }: RepositoryListProps) {
+export function RepositoryList({ initialRepos, accessToken }: RepositoryListProps) {
   const [selectedRepo, setSelectedRepo] = useState<number | null>(null);
+  const [repos, setRepos] = useState<Repository[]>(initialRepos);
 
   const handleCardClick = (repoId: number) => {
     setSelectedRepo(selectedRepo === repoId ? null : repoId);
+  };
+  
+  const onSaveSettings = async (repo: Repository) => {
+    await saveRepository(accessToken, repo);
+    const updatedRepos = await fetchRepositories(accessToken);
+    setRepos(updatedRepos);
   };
 
   return (
@@ -42,8 +48,7 @@ export function RepositoryList({ repos, settings, onSaveSettings }: RepositoryLi
             >
               <div className="mt-4 pt-4 border-t">
                 <RepositorySettings
-                  repoId={repo.id}
-                  initialSettings={settings?.[repo.id]}
+                  repo={repo}
                   onSave={onSaveSettings}
                 />
               </div>

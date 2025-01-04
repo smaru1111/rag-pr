@@ -1,37 +1,27 @@
-import { auth } from "@/auth";
 import { SignOutButton } from "@/app/components/SignOutButton";
-import { LoginButton } from "@/app/components/LoginButton";
-import { getRepositories } from "@/services/repository";
-import { getRepoSettingsByOwner } from "@/lib/cosmosdb";
-import { RepositoryListContainer } from "@/app/components/RepositoryListContainer";
+import { fetchRepositories } from "@/services/repository";
+import { RepositoryList } from "./components/RepositoryList";
+import { auth } from "@/auth";
+
+// Server Component
 export default async function Home() {
-  const session = await auth();
-  
-  if (!session) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-24">
-        <LoginButton />
-      </div>
-    );
-  }
-
   try {
-    const repos = await getRepositories(session.accessToken!);
-    const settings = await getRepoSettingsByOwner(session.user?.id as string);
-    const settingsMap = settings.reduce((acc, setting) => {
-      acc[setting.repo_id] = setting;
-      return acc;
-    }, {} as Record<number, typeof settings[0]>);
+    const session = await auth();
+    if (!session?.accessToken) {
+      throw new Error("No access token");
+    }
 
+    const repos = await fetchRepositories(session.accessToken);
+    // console.log('repos', repos);
     return (
       <div className="min-h-screen p-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Repository Management</h1>
           <SignOutButton />
         </div>
-        <RepositoryListContainer 
-          repos={repos} 
-          initialSettings={settingsMap}
+        <RepositoryList 
+          initialRepos={repos} 
+          accessToken={session.accessToken}
         />
       </div>
     );

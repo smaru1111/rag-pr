@@ -6,36 +6,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import type { RepoSettings } from '@/lib/cosmosdb';
-
-type ReviewStyle = RepoSettings['review_style'];
-type Language = RepoSettings['language'];
+import { Loader2 } from "lucide-react";
+import { Repository } from '@/types/repository';
 
 interface RepositorySettingsProps {
-  repoId: number;
-  initialSettings?: RepoSettings;
-  onSave: (settings: RepoSettings) => Promise<void>;
+  repo: Repository;
+  onSave: (repos: Repository) => Promise<void>;
 }
 
-export function RepositorySettings({ repoId, initialSettings, onSave }: RepositorySettingsProps) {
-  const [settings, setSettings] = useState<RepoSettings>({
-    is_enabled: initialSettings?.is_enabled ?? false,
-    review_style: initialSettings?.review_style ?? 'friendly',
-    language: initialSettings?.language ?? 'en',
-    focus_areas: initialSettings?.focus_areas ?? [],
-    repo_id: repoId,
-    owner_id: initialSettings?.owner_id ?? '',
-    id: initialSettings?.id ?? '',
-    full_name: initialSettings?.full_name ?? '',
-    created_at: initialSettings?.created_at ?? new Date(),
-    updated_at: initialSettings?.updated_at ?? new Date(),
+export function RepositorySettings({repo, onSave }: RepositorySettingsProps) {
+  const [settings, setSettings] = useState<Repository>({
+    id: repo.id,
+    repo_id: repo.repo_id,
+    is_enabled: repo.is_enabled,
+    review_style: repo.review_style,
+    language: repo.language,
+    focus_areas: repo.focus_areas,
+    owner_id: repo.owner_id,
+    full_name: repo.full_name,
+    description: repo.description,
+    created_at: repo.created_at,
+    updated_at: repo.updated_at,
   });
-
+  
+  const [isSaving, setIsSaving] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave({
-      ...settings
-    });
+    setIsSaving(true);
+    try {
+      await onSave(settings);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -61,7 +63,7 @@ export function RepositorySettings({ repoId, initialSettings, onSave }: Reposito
             <Select
               value={settings.review_style}
               onValueChange={(value) => 
-                setSettings({ ...settings, review_style: value as ReviewStyle })
+                setSettings({ ...settings, review_style: value as 'strict' | 'friendly' | 'casual' })
               }
             >
               <SelectTrigger className="bg-background">
@@ -80,7 +82,7 @@ export function RepositorySettings({ repoId, initialSettings, onSave }: Reposito
             <Select
               value={settings.language}
               onValueChange={(value) => 
-                setSettings({ ...settings, language: value as Language })
+                setSettings({ ...settings, language: value as 'en' | 'ja' })
               }
             >
               <SelectTrigger className="bg-background">
@@ -93,7 +95,10 @@ export function RepositorySettings({ repoId, initialSettings, onSave }: Reposito
             </Select>
           </div>
 
-          <Button type="submit">Save Settings</Button>
+          <Button disabled={isSaving} type="submit">
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSaving ? 'Saving...' : 'Save Settings'}
+          </Button>
         </form>
       </CardContent>
     </Card>
