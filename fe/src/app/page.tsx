@@ -12,7 +12,6 @@ export default async function Home() {
     }
 
     const repos = await fetchRepositories(session.accessToken);
-    // console.log('repos', repos);
     return (
       <div className="min-h-screen p-8">
         <div className="flex justify-between items-center mb-8">

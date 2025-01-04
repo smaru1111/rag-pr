@@ -9,7 +9,6 @@ export async function fetchRepositories(accessToken: string): Promise<Repository
 }
 
 export async function saveRepository(accessToken: string, repos: Repository): Promise<Repository> {
-  // console.log('saving repos', repos);
   const response = await fetchWithAuth(`/api/repos`, accessToken, {
     method: 'POST',
     body: JSON.stringify(repos), 

@@ -49,3 +49,47 @@ export async function getGitHubRepository(accessToken: string): Promise<Reposito
   return validRepos;
 }
 
+export async function getPullRequestDiff(token: string, owner: string, repo: string, pullNumber: number) {
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3.diff',
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch pull request diff');
+  }
+
+  return await response.text();
+}
+
+export async function createPullRequestComment(
+  token: string,
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  body: string
+) {
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${pullNumber}/comments`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ body }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to create pull request comment');
+  }
+
+  return await response.json();
+}
+
