@@ -3,22 +3,19 @@
 import { useState } from 'react';
 import { RepositorySettings } from './RepositorySettings';
 import type { RepoSettings } from '@/lib/cosmosdb';
-
-interface Repository {
-  id: number;
-  full_name: string;
-  description: string | null;
-}
+import { Repository } from '@/services/repository';
 
 interface RepositoryListProps {
   repos: Repository[];
   settings?: Record<number, RepoSettings>;
-  onSaveSettings: (settings: Partial<RepoSettings>) => Promise<void>;
+  onSaveSettings: (settings: RepoSettings) => Promise<void>;
 }
 
 export function RepositoryList({ repos, settings, onSaveSettings }: RepositoryListProps) {
   const [selectedRepo, setSelectedRepo] = useState<number | null>(null);
 
+  console.log("settings", settings);
+  console.log("repos", repos);
   return (
     <div className="grid gap-4">
       {repos.map((repo) => (

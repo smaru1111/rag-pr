@@ -14,7 +14,7 @@ interface RepositoryListContainerProps {
 export function RepositoryListContainer({ repos, initialSettings }: RepositoryListContainerProps) {
   const [settings, setSettings] = useState(initialSettings);
 
-  const handleSaveSettings = async (newSettings: Partial<RepoSettings>) => {
+  const handleSaveSettings = async (newSettings: RepoSettings) => {
     try {
       const savedSettings = await saveRepoSettings(newSettings.repo_id!, newSettings);
       setSettings(prev => ({

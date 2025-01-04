@@ -4,7 +4,12 @@ import type { RepoSettings } from "@/lib/cosmosdb";
 export interface Repository {
   id: number;
   full_name: string;
+  owner_id: string;
   description: string | null;
+  is_enabled: boolean;
+  review_style: "strict" | "friendly" | "casual";
+  language: "en" | "ja";
+  focus_areas: string[];
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';

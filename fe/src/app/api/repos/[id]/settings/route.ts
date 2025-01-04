@@ -38,7 +38,7 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session?.accessToken) {
@@ -46,12 +46,15 @@ export async function POST(
   }
 
   try {
+    const { id } = await params;
+    console.log("POST request params", id);
+    
     const user = await getGitHubUser(session.accessToken);
     const settings = await request.json();
     const updated = await updateRepoSettings({
       ...settings,
       owner_id: user.id.toString(),
-      repo_id: parseInt(params.id),
+      repo_id: parseInt(id),
     });
 
     return NextResponse.json(updated);

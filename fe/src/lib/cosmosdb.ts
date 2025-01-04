@@ -26,6 +26,9 @@ export async function getRepoSettings(ownerId: string, repoId: number): Promise<
   try {
     // owner_id でパーティション分割されたデータにアクセス
     const { resource } = await repoContainer.item(repoId.toString(), ownerId).read();
+    if (!isRepoSettings(resource)) {
+      throw new Error("Invalid data structure received from database");
+    }
     return resource;
   } catch (error) {
     console.error(error);
@@ -79,6 +82,9 @@ export async function updateRepoSettings(settings: Partial<RepoSettings>): Promi
 }
 
 function isRepoSettings(data: unknown): data is RepoSettings {
+  console.log("isRepoSettings", data);
+  // typeof
+  console.log("typeof", typeof data);
   if (!data || typeof data !== 'object') return false;
   
   const requiredFields: (keyof RepoSettings)[] = [
@@ -96,3 +102,12 @@ function isRepoSettings(data: unknown): data is RepoSettings {
   
   return requiredFields.every(field => field in data);
 } 
+
+  // is_enabled: false,
+  // review_style: 'friendly',
+  // language: 'en',
+  // focus_areas: [],
+  // repo_id: 656981740,
+  // owner_id: '96244711',
+  // updated_at: '2025-01-04T09:02:55.766Z',
+  // id: '64f9e047-dfad-4884-9847-ad8ea503a03e',
