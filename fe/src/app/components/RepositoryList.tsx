@@ -35,6 +35,9 @@ export function RepositoryList({ initialRepos, accessToken }: RepositoryListProp
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-semibold">{repo.full_name}</CardTitle>
+            <span className="text-sm text-blue-500 dark:text-blue-400 hover:underline cursor-pointer">
+              {selectedRepo === repo.id ? "Hide settings" : "Show settings"}
+            </span>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">{repo.description}</p>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { getGitHubUser, getGitHubRepository } from "@/lib/repository";
-import { getRepositories, updateRepository } from "@/lib/cosmosdb";
+import { getGitHubUser, getGitHubRepository } from "@/app/api/utils/repository";
+import { getRepositories, updateRepository } from "@/app/api/utils/cosmosdb";
 
 
 export async function GET() {
