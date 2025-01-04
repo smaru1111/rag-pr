@@ -14,10 +14,10 @@ export function RepositoryList({ repos }: RepositoryListProps) {
       {repos.map((repo) => (
         <div
           key={repo.id}
-          className="border p-4 rounded-lg hover:border-gray-400 transition-colors"
+          className="border p-4 rounded-lg hover:border-gray-400 dark:hover:border-gray-600 dark:hover:bg-gray-800 transition-colors"
         >
           <h2 className="text-lg font-semibold">{repo.full_name}</h2>
-          <p className="text-gray-600">{repo.description}</p>
+          <p className="text-gray-600 dark:text-gray-400">{repo.description}</p>
         </div>
       ))}
     </div>

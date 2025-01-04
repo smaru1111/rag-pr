@@ -16,7 +16,6 @@ export default async function Home() {
   }
 
   try {
-    console.log(session);
     const repos = await getRepositories(session.accessToken!);
 
     return (
