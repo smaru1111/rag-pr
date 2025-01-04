@@ -34,6 +34,10 @@ export const {
       }
     }),
   ],
+  secret: process.env.NEXT_PUBLIC_AUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       if (account) {
