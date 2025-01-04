@@ -21,6 +21,9 @@ jobs:
       - name: npm install, build, and test
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_GITHUB_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GITHUB_CLIENT_ID }}
+          NEXT_PUBLIC_GITHUB_CLIENT_SECRET: ${{ secrets.NEXT_PUBLIC_GITHUB_CLIENT_SECRET }}
+          NEXT_PUBLIC_AUTH_SECRET: ${{ secrets.NEXT_PUBLIC_AUTH_SECRET }}
         run: |
           cd fe
           npm install
