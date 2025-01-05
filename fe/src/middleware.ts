@@ -5,7 +5,7 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(request: NextRequest) {
     const token = await getToken({ 
       req: request,
-      secret: process.env.NEXT_PUBLIC_AUTH_SECRET
+      secret: process.env.NEXTAUTH_SECRET
     }).catch((error) => {
       console.error('🔥エラーが発生しました:', error);
     });

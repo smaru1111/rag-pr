@@ -35,7 +35,7 @@ export const {
     }),
   ],
   trustHost: true,
-  secret: process.env.NEXT_PUBLIC_AUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
