@@ -73,5 +73,4 @@ export const {
       return "https://ragprwebapps-asfeagcmfydzecb4.japaneast-01.azurewebsites.net";
     },
   },
-  debug: true,
 }); 
