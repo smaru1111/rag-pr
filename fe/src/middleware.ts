@@ -10,11 +10,7 @@ export async function middleware(request: NextRequest) {
       cookieName: process.env.NODE_ENV === "production" 
         ? "__Secure-authjs.session-token"
         : "authjs.session-token"
-    }).catch((error) => {
-      console.error('🔥エラーが発生しました:', error);
-    });
-  
-  console.log('🔥token', token);
+    })
   
   // 認証が必要なパスのリスト
   const authRequiredPaths = ["/"];
@@ -25,17 +21,13 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === path + "/"
   );
   
-  console.log('🔥isAuthRequired', isAuthRequired);
-
   // 認証が必要で、トークンがない場合はログインページへリダイレクト
   if (isAuthRequired && !token) {
-    console.log('🙇‍♂️tokenがない');
     return NextResponse.redirect(new URL("/auth", request.url));
   }
 
   // 既に認証済みでログインページにアクセスした場合はホームへリダイレクト
   if (token && request.nextUrl.pathname === "/auth") {
-    console.log('🙇‍♂️ログインページにアクセスした');
     return NextResponse.redirect(new URL("/", request.url));
   }
 
