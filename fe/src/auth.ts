@@ -65,6 +65,13 @@ export const {
       session.accessToken = token.accessToken;
       return session;
     },
+    async redirect() {
+      // プロキシの影響を排除するためにbaseUrlを修正
+      if (process.env.NODE_ENV === "development") {
+        return "http://localhost:3000";
+      }
+      return "https://ragprwebapps-asfeagcmfydzecb4.japaneast-01.azurewebsites.net";
+    },
   },
   debug: true,
 }); 
