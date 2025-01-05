@@ -34,6 +34,8 @@ jobs:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
         run: |
           cd fe
+          rm -rf .next
+          rm -rf node_modules/.cache
           npm install
           npm run build --if-present
           npm run test --if-present
