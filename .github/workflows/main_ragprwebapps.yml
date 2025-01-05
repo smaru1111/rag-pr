@@ -30,6 +30,7 @@ jobs:
           NEXT_PUBLIC_GITHUB_APP_ID: ${{ secrets.NEXT_PUBLIC_GITHUB_APP_ID }}
           NEXT_PUBLIC_GITHUB_PRIVATE_KEY: ${{ secrets.NEXT_PUBLIC_GITHUB_PRIVATE_KEY }}
           NEXT_PUBLIC_GITHUB_WEBHOOK_SECRET: ${{ secrets.NEXT_PUBLIC_GITHUB_WEBHOOK_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
         run: |
           cd fe
           npm install
