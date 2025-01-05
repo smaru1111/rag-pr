@@ -40,15 +40,31 @@ export const {
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      console.log('SignIn Callback:', {
+        user,
+        account,
+        profile,
+        env: {
+          clientId: process.env.NEXT_PUBLIC_GITHUB_ID,
+          hasSecret: !!process.env.NEXT_PUBLIC_GITHUB_SECRET,
+          baseUrl: process.env.NEXTAUTH_URL,
+        }
+      });
+      return true;
+    },
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
+      console.log('JWT Callback:', { token, account });
       if (account) {
         token.accessToken = account.access_token;
       }
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
+      console.log('Session Callback:', { session, token });
       session.accessToken = token.accessToken;
       return session;
     },
   },
+  debug: true,
 }); 
