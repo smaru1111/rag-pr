@@ -1,7 +1,7 @@
 import { SignOutButton } from "@/app/components/SignOutButton";
 import { fetchRepositories } from "@/services/repository";
 import { RepositoryList } from "./components/RepositoryList";
-import { auth } from "@/auth";
+import { auth } from "@/app/api/utils/auth";
 
 // Server Component
 export default async function Home() {
