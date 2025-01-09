@@ -1,4 +1,4 @@
-import { Repository } from "@/types/repository";
+import { Collaborator, Repository } from "@/types/repository";
 export async function getGitHubUser(accessToken: string) {
   const response = await fetch("https://api.github.com/user", {
     headers: {
@@ -30,6 +30,7 @@ export async function getGitHubRepository(accessToken: string): Promise<Reposito
     id: number;
     owner: { login: string };
     full_name: string;
+    name: string;
     description: string | null;
   }[];
   
@@ -38,11 +39,13 @@ export async function getGitHubRepository(accessToken: string): Promise<Reposito
     owner_id: repo.owner.login,
     repo_id: repo.id,
     full_name: repo.full_name,
+    name: repo.name,
     description: repo.description,
     is_enabled: false,
     review_style: "strict",
     language: "en",
     focus_areas: [],
+    collaborators: [],
     created_at: new Date(),
     updated_at: new Date(),
   }));
@@ -91,5 +94,30 @@ export async function createPullRequestComment(
   }
 
   return await response.json();
+}
+
+export async function getRepositoryCollaborators(token: string, owner: string, repo: string): Promise<Collaborator[]> {
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/collaborators`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch collaborators');
+  }
+
+  const collaborators = await response.json();
+  return collaborators.map((collaborator: Collaborator) => ({
+    id: collaborator.id.toString(),
+    login: collaborator.login,
+    avatar_url: collaborator.avatar_url,
+    role_name: collaborator.role_name,
+    permissions: collaborator.permissions
+  }));
 }
 
