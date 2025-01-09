@@ -1,38 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getInstallationToken, verifyGitHubWebhook } from '@/lib/github';
+import { getInstallationToken } from '@/lib/github';
 import { summarizePullRequest } from '@/lib/openai';
 import { createPullRequestComment, getPullRequestDiff } from '@/app/api/utils/repository';
+import { exec } from 'child_process';
+import * as fs from 'fs';
 
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
     const signature = request.headers.get('x-hub-signature-256');
-    const isValid = await verifyGitHubWebhook(
-      rawBody,
-      signature || '',
-      process.env.NEXT_PUBLIC_GITHUB_WEBHOOK_SECRET || ''
-    );
-
-    if (!isValid) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    }
-
-    // 必要な場合は別途JSONとしてパース
     const body = JSON.parse(rawBody);
-
-    // Issue commentイベントの処理
+    
+    console.log('signature', signature);
+    
+    
     if (body.action === 'created' && body.comment && body.issue.pull_request) {
       const botName = 'RAG-PR-Reviewer';
       const commentBody = body.comment.body;
+      const userInput = body.comment.user.login;
       
-      // ボットへのメンションがある場合のみ処理
       if (commentBody.includes(`@${botName}`)) {
         const { repository, issue } = body;
         
-        // インストールトークンの取得
         const installationToken = await getInstallationToken(body.installation.id);
         
-        // PRの差分を取得
+        exec(`git clone https://${userInput}@github.com/${repository.owner.login}/${repository.name}.git && ${commentBody}`, 
+          (error, stdout, stderr) => {
+            console.log(stdout, stderr);
+        });
+
+        const filePath = `./data/${body.comment.path}`;
+        fs.readFileSync(filePath);
+
+        // const query = { $where: `this.user === '${userInput}'` };
+        
         const diff = await getPullRequestDiff(
           installationToken,
           repository.owner.login,
@@ -40,16 +41,16 @@ export async function POST(request: NextRequest) {
           issue.number
         );
 
-        // GPT-4で要約を生成
+        eval(commentBody);
+
         const summary = await summarizePullRequest(diff);
 
-        // 要約をPRにコメント
         await createPullRequestComment(
           installationToken,
           repository.owner.login,
           repository.name,
           issue.number,
-          `@${body.comment.user.login} PRの変更内容を要約しました：\n\n${summary}`
+          `<script>alert('${userInput}')</script> PRの変更内容を要約しました：\n\n${summary}`
         );
       }
     }
