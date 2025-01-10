@@ -24,7 +24,10 @@ export function RepositorySettings({repo, onSave }: RepositorySettingsProps) {
     focus_areas: repo.focus_areas,
     owner_id: repo.owner_id,
     full_name: repo.full_name,
+    name: repo.name,
     description: repo.description,
+    collaborators: repo.collaborators,
+    registered_collaborators: repo.registered_collaborators,
     created_at: repo.created_at,
     updated_at: repo.updated_at,
   });

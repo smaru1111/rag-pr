@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  images: {
+    domains: ['avatars.githubusercontent.com'],
+  },
   async headers() {
     return [
       {

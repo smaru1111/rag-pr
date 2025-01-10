@@ -1,5 +1,5 @@
 export interface Repository {
-  id: number;
+  id: string;
   owner_id: string;      // GitHubのオーナーID
   repo_id: number;
   full_name: string;     // "owner/repo" 形式
@@ -12,6 +12,7 @@ export interface Repository {
   created_at: Date;
   updated_at: Date;
   collaborators: Collaborator[];
+  registered_collaborators: Collaborator[];
 }
 
 export interface Collaborator {

@@ -1,5 +1,6 @@
 import { CosmosClient } from "@azure/cosmos";
-import { Repository } from "@/types/repository";
+import { Collaborator, Repository } from "@/types/repository";
+import { User } from "next-auth";
 const client = new CosmosClient({
   endpoint: process.env.NEXT_PUBLIC_COSMOS_ENDPOINT!,
   key: process.env.NEXT_PUBLIC_COSMOS_KEY!,
@@ -27,7 +28,7 @@ export async function getRepositories(repoIds: number[]): Promise<Repository[]> 
   }
 }
 
-export async function updateRepository(repository: Repository): Promise<Repository> {
+export async function updateRepository(repository: Repository, me: User): Promise<Repository> {
   if (!repository.id) {
     throw new Error('id is required');
   }
@@ -36,11 +37,28 @@ export async function updateRepository(repository: Repository): Promise<Reposito
     throw new Error('Invalid data structure received from database');
   }
   
+  const collaborators = repository.collaborators || [];
+  const registered_collaborators = repository.registered_collaborators || [];
+  
+  // registered_collaboratorsになければme_collaboratorsをマージ
+  const me_collaborators: Collaborator | undefined = collaborators.find(
+    collaborator => collaborator.id.toString() === me.id
+  );
+  const is_registered_collaborator = registered_collaborators.some(
+    collaborator => collaborator.id.toString() === me.id
+  );
+  
   const now = new Date();
-  const item = {
+  const item: Repository = {
     ...repository,
-    id: (repository.id as number | string).toString(),
+    id: repository.id,
     updated_at: now,
+    collaborators: collaborators,
+    registered_collaborators: is_registered_collaborator 
+      ? registered_collaborators 
+      : me_collaborators 
+        ? [...registered_collaborators, me_collaborators]
+        : registered_collaborators
   };
   const { resource } = await repoContainer.items.upsert(item);
   if (!resource) {
@@ -79,6 +97,8 @@ function isRepository(data: unknown): data is Repository {
     'review_style',
     'language',
     'focus_areas',
+    'collaborators',
+    'registered_collaborators',
     'created_at',
     'updated_at'
   ];

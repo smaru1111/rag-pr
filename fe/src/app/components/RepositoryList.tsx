@@ -5,22 +5,26 @@ import { RepositorySettings } from './RepositorySettings';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchRepositories, saveRepository } from '@/services/repository';
 import { Repository } from '@/types/repository';
+import { User } from 'next-auth';
 
 interface RepositoryListProps {
   initialRepos: Repository[];
   accessToken: string;
+  me: User;
 }
 
-export function RepositoryList({ initialRepos, accessToken }: RepositoryListProps) {
-  const [selectedRepo, setSelectedRepo] = useState<number | null>(null);
+export function RepositoryList({ initialRepos, accessToken, me }: RepositoryListProps) {
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [repos, setRepos] = useState<Repository[]>(initialRepos);
+  // ログイン中のユーザを取得
 
-  const handleCardClick = (repoId: number) => {
+  const handleCardClick = (repoId: string) => {
     setSelectedRepo(selectedRepo === repoId ? null : repoId);
   };
   
   const onSaveSettings = async (repo: Repository) => {
-    await saveRepository(accessToken, repo);
+    // ログイン中のユーザをコラボレータに追加
+    await saveRepository(accessToken, repo, me);
     const updatedRepos = await fetchRepositories(accessToken);
     setRepos(updatedRepos);
   };

@@ -35,7 +35,7 @@ export async function getGitHubRepository(accessToken: string): Promise<Reposito
   }[];
   
   const validRepos: Repository[] = repos.map((repo) => ({
-    id: repo.id,
+    id: repo.id.toString(),
     owner_id: repo.owner.login,
     repo_id: repo.id,
     full_name: repo.full_name,
@@ -46,6 +46,7 @@ export async function getGitHubRepository(accessToken: string): Promise<Reposito
     language: "en",
     focus_areas: [],
     collaborators: [],
+    registered_collaborators: [],
     created_at: new Date(),
     updated_at: new Date(),
   }));

@@ -3,6 +3,8 @@ import { getInstallationToken, verifyGitHubWebhook } from '@/lib/github';
 import { summarizePullRequest } from '@/lib/openai';
 import { createPullRequestComment, getPullRequestDiff } from '@/app/api/utils/repository';
 
+const BOT_NAME = 'rag-dev1111';
+
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
@@ -22,11 +24,10 @@ export async function POST(request: NextRequest) {
 
     // Issue commentイベントの処理
     if (body.action === 'created' && body.comment && body.issue.pull_request) {
-      const botName = 'RAG-PR-Reviewer';
       const commentBody = body.comment.body;
       
       // ボットへのメンションがある場合のみ処理
-      if (commentBody.includes(`@${botName}`)) {
+      if (commentBody.includes(`@${BOT_NAME}`)) {
         const { repository, issue } = body;
         
         // インストールトークンの取得
@@ -39,9 +40,13 @@ export async function POST(request: NextRequest) {
           repository.name,
           issue.number
         );
+        
+        console.log('👀diff', diff);
 
         // GPT-4で要約を生成
         const summary = await summarizePullRequest(diff);
+
+        console.log('👀summary', summary);
 
         // 要約をPRにコメント
         await createPullRequestComment(
