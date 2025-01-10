@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(savedRepos);
 }
   
-export async function PUT(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   const headersList = await headers();
   const authHeader = headersList.get("Authorization");
   const token = authHeader?.split(" ")[1];

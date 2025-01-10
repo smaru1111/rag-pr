@@ -10,7 +10,7 @@ export async function fetchRepositories(accessToken: string): Promise<Repository
 
 export async function saveRepository(accessToken: string, repos: Repository): Promise<Repository> {
   const response = await fetchWithAuth(`/api/repos`, accessToken, {
-    method: 'POST',
+    method: 'PATCH',
     body: JSON.stringify(repos), 
   });
 
