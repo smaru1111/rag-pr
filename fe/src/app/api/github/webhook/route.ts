@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getInstallationToken, verifyGitHubWebhook } from '@/lib/github';
 import { summarizePullRequest } from '@/lib/openai';
 import { createPullRequestComment, getPullRequestDiff } from '@/app/api/utils/repository';
+import { getRemainingQuestions, recordUserQuestion } from '@/app/api/utils/cosmosdb';
 
-const BOT_NAME = 'rag-dev1111';
+const BOT_NAME = process.env.NODE_ENV === 'production' ? 'rag-bot-prd' : 'rag-bot-dev';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +30,22 @@ export async function POST(request: NextRequest) {
       // ボットへのメンションがある場合のみ処理
       if (commentBody.includes(`@${BOT_NAME}`)) {
         const { repository, issue } = body;
+        const userId = body.comment.user.id.toString();
+        
+        // 残り質問回数を確認
+        const remainingQuestions = await getRemainingQuestions(userId);
+        
+        if (remainingQuestions <= 0) {
+          // 質問回数が上限に達している場合
+          await createPullRequestComment(
+            await getInstallationToken(body.installation.id),
+            repository.owner.login,
+            repository.name,
+            issue.number,
+            `@${body.comment.user.login} 申し訳ありませんが、本日の質問回数上限（5回）に達しました。明日またお試しください。`
+          );
+          return NextResponse.json({ success: true });
+        }
         
         // インストールトークンの取得
         const installationToken = await getInstallationToken(body.installation.id);
@@ -48,13 +65,19 @@ export async function POST(request: NextRequest) {
 
         console.log('👀summary', summary);
 
+        // 質問回数を記録
+        await recordUserQuestion(userId);
+        
+        // 残り質問回数
+        const newRemainingQuestions = remainingQuestions - 1;
+
         // 要約をPRにコメント
         await createPullRequestComment(
           installationToken,
           repository.owner.login,
           repository.name,
           issue.number,
-          `@${body.comment.user.login} PRの変更内容を要約しました：\n\n${summary}`
+          `@${body.comment.user.login} PRの変更内容を要約しました：\n\n${summary}\n\n（本日の残り質問回数: ${newRemainingQuestions}回）`
         );
       }
     }

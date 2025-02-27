@@ -1,19 +1,20 @@
 import { CosmosClient } from "@azure/cosmos";
 import { Collaborator, Repository } from "@/types/repository";
 import { User } from "next-auth";
+
 const client = new CosmosClient({
   endpoint: process.env.NEXT_PUBLIC_COSMOS_ENDPOINT!,
   key: process.env.NEXT_PUBLIC_COSMOS_KEY!,
 });
 
 const database = client.database("rag-pr");
-// パーティションキーを owner_id に設定
-const repoContainer = database.container("repositories");
+// パーティションキーを type に設定
+const entitiesContainer = database.container("entities");
 
 export async function getRepositories(repoIds: number[]): Promise<Repository[]> {
   try {
-    const { resources } = await repoContainer.items.query({
-      query: "SELECT * FROM c WHERE ARRAY_CONTAINS(@repoIds, c.repo_id)",
+    const { resources } = await entitiesContainer.items.query({
+      query: "SELECT * FROM c WHERE c.type = 'repository' AND ARRAY_CONTAINS(@repoIds, c.repo_id)",
       parameters: [
         {
           name: "@repoIds",
@@ -40,7 +41,6 @@ export async function updateRepository(repository: Repository, me: User): Promis
   const collaborators = repository.collaborators || [];
   const registered_collaborators = repository.registered_collaborators || [];
   
-  // registered_collaboratorsになければme_collaboratorsをマージ
   const me_collaborators: Collaborator | undefined = collaborators.find(
     collaborator => collaborator.id.toString() === me.id
   );
@@ -49,8 +49,9 @@ export async function updateRepository(repository: Repository, me: User): Promis
   );
   
   const now = new Date();
-  const item: Repository = {
+  const item: Repository & { type: string } = {
     ...repository,
+    type: 'repository',
     id: repository.id,
     updated_at: now,
     collaborators: collaborators,
@@ -60,7 +61,7 @@ export async function updateRepository(repository: Repository, me: User): Promis
         ? [...registered_collaborators, me_collaborators]
         : registered_collaborators
   };
-  const { resource } = await repoContainer.items.upsert(item);
+  const { resource } = await entitiesContainer.items.upsert(item);
   if (!resource) {
     throw new Error('Failed to update repository');
   }
@@ -78,7 +79,7 @@ export async function createRepository(repository: Repository): Promise<Reposito
     created_at: now,
     updated_at: now,
   };
-  const { resource } = await repoContainer.items.upsert(item);
+  const { resource } = await entitiesContainer.items.upsert(item);
   if (!resource) {
     throw new Error('Failed to create repository');
   }
@@ -104,4 +105,50 @@ function isRepository(data: unknown): data is Repository {
   ];
   
   return requiredFields.every(field => field in data);
+}
+
+// ユーザーの今日の質問回数を取得
+export async function getUserQuestionsCount(userId: string): Promise<number> {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const { resources } = await entitiesContainer.items.query({
+      query: "SELECT VALUE COUNT(1) FROM c WHERE c.type = 'question' AND c.user_id = @userId AND c.timestamp >= @today",
+      parameters: [
+        { name: "@userId", value: userId },
+        { name: "@today", value: today.toISOString() }
+      ]
+    }).fetchAll();
+    
+    return resources[0] || 0;
+  } catch (error) {
+    console.error("質問回数取得エラー:", error);
+    return 0;
+  }
+}
+
+// ユーザーの残り質問回数を取得
+export async function getRemainingQuestions(userId: string): Promise<number> {
+  const MAX_QUESTIONS_PER_DAY = 5;
+  const usedCount = await getUserQuestionsCount(userId);
+  return Math.max(0, MAX_QUESTIONS_PER_DAY - usedCount);
+}
+
+// 質問履歴を記録
+export async function recordUserQuestion(userId: string): Promise<boolean> {
+  try {
+    const item = {
+      id: `question-${userId}-${Date.now()}`,
+      type: 'question',
+      user_id: userId,
+      timestamp: new Date().toISOString()
+    };
+    
+    await entitiesContainer.items.create(item);
+    return true;
+  } catch (error) {
+    console.error("質問記録エラー:", error);
+    return false;
+  }
 } 
