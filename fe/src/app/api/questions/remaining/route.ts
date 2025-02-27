@@ -1,15 +1,19 @@
-import {  NextResponse } from "next/server";
-import { auth } from "@/app/api/utils/auth";
+import { NextResponse } from "next/server";
 import { getRemainingQuestions } from "@/app/api/utils/cosmosdb";
+import { headers } from "next/headers";
+import { getGitHubUser } from "../../utils/repository";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証されていません" }, { status: 401 });
+    const headersList = await headers();
+    const authHeader = headersList.get("Authorization");
+    const token = authHeader?.split(" ")[1];
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
-    const userId = session.user.id;
+    const user = await getGitHubUser(token);
+    const userId = user.id.toString();
     const remaining = await getRemainingQuestions(userId);
     
     return NextResponse.json({ remaining });

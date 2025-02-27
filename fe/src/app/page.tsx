@@ -23,9 +23,10 @@ export default async function Home() {
 
     const repos = await fetchRepositories(session.accessToken);
     // 残り質問回数を取得
-    const remainingQuestions = await fetchRemainingQuestions();
+    const remainingQuestions = await fetchRemainingQuestions(session.accessToken);
+    console.log('👀remainingQuestions', remainingQuestions);
     
-    console.log('👀repos', repos);
+    // console.log('👀repos', repos);
     return (
       <div className="min-h-screen p-8">
         <div className="flex justify-between items-center mb-8">

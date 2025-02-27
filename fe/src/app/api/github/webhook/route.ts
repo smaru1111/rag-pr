@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         // 質問回数を記録
         await recordUserQuestion(userId);
         
-        // 残り質問回数
+        // 残り質問回数を計算
         const newRemainingQuestions = remainingQuestions - 1;
 
         // 要約をPRにコメント

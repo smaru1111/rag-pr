@@ -107,21 +107,65 @@ function isRepository(data: unknown): data is Repository {
   return requiredFields.every(field => field in data);
 }
 
-// ユーザーの今日の質問回数を取得
-export async function getUserQuestionsCount(userId: string): Promise<number> {
+// ユーザーの質問情報を取得
+export async function getUserQuestionInfo(userId: string): Promise<{ count: number, lastUpdated: string } | null> {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
+    // まずユーザーIDで直接検索
     const { resources } = await entitiesContainer.items.query({
-      query: "SELECT VALUE COUNT(1) FROM c WHERE c.type = 'question' AND c.user_id = @userId AND c.timestamp >= @today",
+      query: "SELECT * FROM c WHERE c.type = 'user_question_count' AND c.user_id = @userId",
       parameters: [
-        { name: "@userId", value: userId },
-        { name: "@today", value: today.toISOString() }
+        { name: "@userId", value: userId }
       ]
     }).fetchAll();
     
-    return resources[0] || 0;
+    if (resources.length === 0) {
+      // IDでも検索
+      const { resources: altResources } = await entitiesContainer.items.query({
+        query: "SELECT * FROM c WHERE c.id = @id",
+        parameters: [
+          { name: "@id", value: `user-question-${userId}` }
+        ]
+      }).fetchAll();
+      
+      if (altResources.length > 0) {
+        return {
+          count: altResources[0].count || 0,
+          lastUpdated: altResources[0].lastUpdated
+        };
+      }
+      return null;
+    }
+    
+    return {
+      count: resources[0].count || 0,
+      lastUpdated: resources[0].lastUpdated
+    };
+  } catch (error) {
+    console.error("質問情報取得エラー:", error);
+    return null;
+  }
+}
+
+// ユーザーの今日の質問回数を取得
+export async function getUserQuestionsCount(userId: string): Promise<number> {
+  try {
+    const userInfo = await getUserQuestionInfo(userId);
+    
+    if (!userInfo) {
+      return 0;
+    }
+    
+    // 最終更新日が今日かチェック
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastUpdated = new Date(userInfo.lastUpdated);
+    
+    // 日付が変わっていれば0を返す（新しい日には質問回数リセット）
+    if (lastUpdated < today) {
+      return 0;
+    }
+    
+    return userInfo.count;
   } catch (error) {
     console.error("質問回数取得エラー:", error);
     return 0;
@@ -138,14 +182,32 @@ export async function getRemainingQuestions(userId: string): Promise<number> {
 // 質問履歴を記録
 export async function recordUserQuestion(userId: string): Promise<boolean> {
   try {
+    const today = new Date();
+    const userInfo = await getUserQuestionInfo(userId);
+    
+    // 今日の日付
+    today.setHours(0, 0, 0, 0);
+    
+    let count = 1; // デフォルトは1（初回の質問）
+    
+    if (userInfo) {
+      const lastUpdated = new Date(userInfo.lastUpdated);
+      
+      // 最終更新日が今日なら質問回数を増やす、そうでなければリセット
+      if (lastUpdated >= today) {
+        count = userInfo.count + 1;
+      }
+    }
+    
     const item = {
-      id: `question-${userId}-${Date.now()}`,
-      type: 'question',
+      id: `user-question-${userId}`,
+      type: 'user_question_count',
       user_id: userId,
-      timestamp: new Date().toISOString()
+      count: count,
+      lastUpdated: new Date().toISOString()
     };
     
-    await entitiesContainer.items.create(item);
+    await entitiesContainer.items.upsert(item);
     return true;
   } catch (error) {
     console.error("質問記録エラー:", error);

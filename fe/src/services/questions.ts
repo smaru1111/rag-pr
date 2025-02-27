@@ -1,6 +1,8 @@
-export async function fetchRemainingQuestions() {
+import { fetchWithAuth } from "@/utils/api-client";
+
+export async function fetchRemainingQuestions(accessToken: string) {
   try {
-    const response = await fetch('/api/questions/remaining', {
+    const response = await fetchWithAuth('/api/questions/remaining', accessToken, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
